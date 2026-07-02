@@ -1,9 +1,6 @@
 services:
-
   analyzer:
-
     build: .
-
     container_name: analyzer-api
 
     ports:
@@ -11,5 +8,9 @@ services:
 
     volumes:
       - .:/app
+      - gradle-cache:/root/.gradle
 
     tty: true
+
+volumes:
+  gradle-cache:
