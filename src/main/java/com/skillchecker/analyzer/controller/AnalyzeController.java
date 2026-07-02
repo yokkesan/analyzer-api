@@ -4,17 +4,28 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.skillchecker.analyzer.dto.AnalyzeRequest;
+import com.skillchecker.analyzer.service.AnalyzeService;
+
 @RestController
 public class AnalyzeController {
 
-    @PostMapping("/analyze")
-    public String analyze(
-        @RequestBody String body
-    ) {
+        private final AnalyzeService analyzeService;
 
-        System.out.println("Analyze API Called");
-        System.out.println(body);
+        public AnalyzeController(
+                        AnalyzeService analyzeService) {
 
-        return "Analyze Started";
-    }
+                this.analyzeService = analyzeService;
+        }
+
+        @PostMapping("/analyze")
+        public String analyze(
+                        @RequestBody AnalyzeRequest request) {
+
+                analyzeService.analyze(
+                                request.getRepositoryId(),
+                                request.getGithubUrl());
+
+                return "Analyze Start";
+        }
 }
