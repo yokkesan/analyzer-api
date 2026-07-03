@@ -1,4 +1,4 @@
-package com.skillchecker.analyzer.service;
+package com.skillchecker.analyzer.service.analyzer;
 
 import java.io.File;
 
