@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.skillchecker.analyzer.dto.AnalyzeRequest;
+import com.skillchecker.analyzer.dto.AnalyzeResult;
 import com.skillchecker.analyzer.service.AnalyzeService;
 
 @RestController
@@ -19,13 +20,11 @@ public class AnalyzeController {
         }
 
         @PostMapping("/analyze")
-        public String analyze(
+        public AnalyzeResult analyze(
                         @RequestBody AnalyzeRequest request) {
 
-                analyzeService.analyze(
+                return analyzeService.analyze(
                                 request.getRepositoryId(),
                                 request.getGithubUrl());
-
-                return "Analyze Start";
         }
 }
