@@ -10,7 +10,30 @@ services:
       - .:/app
       - gradle-cache:/root/.gradle
 
+    environment:
+      DB_URL: ${DB_URL}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+
     tty: true
+
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: analyzer-mysql
+
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+    ports:
+      - "3310:3306"
+
+    volumes:
+      - mysql-data:/var/lib/mysql
 
 volumes:
   gradle-cache:
+  mysql-data:
