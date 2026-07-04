@@ -57,13 +57,11 @@ public class SecurityAnalyzeService {
             }
 
             String fileName =
-                    file.getName();
+                    file.getName()
+                            .toLowerCase();
 
-            if (fileName.endsWith(".png")
-                    || fileName.endsWith(".jpg")
-                    || fileName.endsWith(".jpeg")
-                    || fileName.endsWith(".gif")
-                    || file.length() > 1024 * 1024) {
+            if (!isTargetFile(
+                    fileName)) {
 
                 continue;
             }
@@ -74,27 +72,35 @@ public class SecurityAnalyzeService {
 
             for (String line : lines) {
 
-                if (line.contains("password")) {
+                String lowerLine =
+                        line.toLowerCase();
+
+                if (lowerLine.contains(
+                        "password")) {
 
                     riskCount++;
                 }
 
-                if (line.contains("secret")) {
+                if (lowerLine.contains(
+                        "secret")) {
 
                     riskCount++;
                 }
 
-                if (line.contains("api_key")) {
+                if (lowerLine.contains(
+                        "api_key")) {
 
                     riskCount++;
                 }
 
-                if (line.contains("access_key")) {
+                if (lowerLine.contains(
+                        "access_key")) {
 
                     riskCount++;
                 }
 
-                if (line.contains("private_key")) {
+                if (lowerLine.contains(
+                        "private_key")) {
 
                     riskCount++;
                 }
@@ -102,6 +108,35 @@ public class SecurityAnalyzeService {
         }
 
         return riskCount;
+    }
+
+    private boolean isTargetFile(
+            String fileName) {
+
+        return fileName.endsWith(".java")
+                || fileName.endsWith(".php")
+                || fileName.endsWith(".js")
+                || fileName.endsWith(".ts")
+                || fileName.endsWith(".jsx")
+                || fileName.endsWith(".tsx")
+                || fileName.endsWith(".vue")
+                || fileName.endsWith(".kt")
+                || fileName.endsWith(".go")
+                || fileName.endsWith(".py")
+                || fileName.endsWith(".rb")
+                || fileName.endsWith(".cs")
+                || fileName.endsWith(".html")
+                || fileName.endsWith(".css")
+                || fileName.endsWith(".scss")
+                || fileName.endsWith(".json")
+                || fileName.endsWith(".xml")
+                || fileName.endsWith(".yml")
+                || fileName.endsWith(".yaml")
+                || fileName.endsWith(".properties")
+                || fileName.endsWith(".sql")
+                || fileName.endsWith(".md")
+                || fileName.endsWith(".txt")
+                || fileName.equals(".env");
     }
 
     private int calculateScore(
