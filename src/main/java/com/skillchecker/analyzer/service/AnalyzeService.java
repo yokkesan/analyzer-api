@@ -1,10 +1,16 @@
 package com.skillchecker.analyzer.service;
 
 import java.io.File;
+import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.skillchecker.analyzer.dto.AnalyzeResult;
+import com.skillchecker.analyzer.entity.AnalysisResult;
+import com.skillchecker.analyzer.entity.AnalysisResultDetail;
+import com.skillchecker.analyzer.repository.AnalysisResultDetailRepository;
+import com.skillchecker.analyzer.repository.AnalysisResultRepository;
 import com.skillchecker.analyzer.service.analyzer.DuplicateCodeAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.FrameworkAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.GitAnalyzeService;
@@ -19,26 +25,18 @@ import com.skillchecker.analyzer.service.analyzer.SecurityAnalyzeService;
 public class AnalyzeService {
 
         private final GitCloneService gitCloneService;
-
         private final RepositoryDeleteService repositoryDeleteService;
-
         private final LanguageAnalyzeService languageAnalyzeService;
-
         private final FrameworkAnalyzeService frameworkAnalyzeService;
-
         private final ReadmeAnalyzeService readmeAnalyzeService;
-
         private final GitAnalyzeService gitAnalyzeService;
-
         private final SecurityAnalyzeService securityAnalyzeService;
-
         private final NamingAnalyzeService namingAnalyzeService;
-
         private final ReadabilityAnalyzeService readabilityAnalyzeService;
-
         private final DuplicateCodeAnalyzeService duplicateCodeAnalyzeService;
-
         private final ScoreCalculateService scoreCalculateService;
+        private final AnalysisResultRepository analysisResultRepository;
+        private final AnalysisResultDetailRepository analysisResultDetailRepository;
 
         public AnalyzeService(
                         GitCloneService gitCloneService,
@@ -51,93 +49,81 @@ public class AnalyzeService {
                         NamingAnalyzeService namingAnalyzeService,
                         ReadabilityAnalyzeService readabilityAnalyzeService,
                         DuplicateCodeAnalyzeService duplicateCodeAnalyzeService,
-                        ScoreCalculateService scoreCalculateService) {
+                        ScoreCalculateService scoreCalculateService,
+                        AnalysisResultRepository analysisResultRepository,
+                        AnalysisResultDetailRepository analysisResultDetailRepository) {
 
                 this.gitCloneService = gitCloneService;
-
                 this.repositoryDeleteService = repositoryDeleteService;
-
                 this.languageAnalyzeService = languageAnalyzeService;
-
                 this.frameworkAnalyzeService = frameworkAnalyzeService;
-
                 this.readmeAnalyzeService = readmeAnalyzeService;
-
                 this.gitAnalyzeService = gitAnalyzeService;
-
                 this.securityAnalyzeService = securityAnalyzeService;
-
                 this.namingAnalyzeService = namingAnalyzeService;
-
                 this.readabilityAnalyzeService = readabilityAnalyzeService;
-
                 this.duplicateCodeAnalyzeService = duplicateCodeAnalyzeService;
-
                 this.scoreCalculateService = scoreCalculateService;
+                this.analysisResultRepository = analysisResultRepository;
+                this.analysisResultDetailRepository = analysisResultDetailRepository;
         }
 
-        public AnalyzeResult analyze(
-                        Long repositoryId,
-                        String githubUrl) {
+        @Transactional
+        public AnalyzeResult analyze(Long repositoryId, String githubUrl) {
 
-                File repositoryDirectory = new File(
-                                "repositories/" + repositoryId);
+                File repositoryDirectory = new File("repositories/" + repositoryId);
 
                 try {
 
-                        System.out.println(
-                                        "Analyze Service Start");
+                        System.out.println("Analyze Service Start");
 
-                        gitCloneService.cloneRepository(
-                                        repositoryId,
-                                        githubUrl);
+                        gitCloneService.cloneRepository(repositoryId, githubUrl);
 
-                        String language =
-                                        languageAnalyzeService.analyze(
-                                                        repositoryDirectory);
+                        String language = languageAnalyzeService.analyze(repositoryDirectory);
+                        String framework = frameworkAnalyzeService.analyze(repositoryDirectory);
 
-                        String framework =
-                                        frameworkAnalyzeService.analyze(
-                                                        repositoryDirectory);
+                        int readmeScore = readmeAnalyzeService.analyze(repositoryDirectory);
+                        int gitScore = gitAnalyzeService.analyze(repositoryDirectory);
+                        int securityScore = securityAnalyzeService.analyze(repositoryDirectory);
+                        int namingScore = namingAnalyzeService.analyze(repositoryDirectory);
+                        int readabilityScore = readabilityAnalyzeService.analyze(repositoryDirectory);
+                        int duplicateCodeScore = duplicateCodeAnalyzeService.analyze(repositoryDirectory);
 
-                        int readmeScore =
-                                        readmeAnalyzeService.analyze(
-                                                        repositoryDirectory);
+                        int totalScore = scoreCalculateService.calculate(
+                                        language,
+                                        framework,
+                                        readmeScore,
+                                        gitScore,
+                                        securityScore,
+                                        namingScore,
+                                        readabilityScore,
+                                        duplicateCodeScore);
 
-                        int gitScore =
-                                        gitAnalyzeService.analyze(
-                                                        repositoryDirectory);
+                        LocalDateTime now = LocalDateTime.now();
 
-                        int securityScore =
-                                        securityAnalyzeService.analyze(
-                                                        repositoryDirectory);
+                        AnalysisResult analysisResult = new AnalysisResult();
+                        analysisResult.setRepositoryUrl(githubUrl);
+                        analysisResult.setTotalScore(totalScore);
+                        analysisResult.setCreatedAt(now);
 
-                        int namingScore =
-                                        namingAnalyzeService.analyze(
-                                                        repositoryDirectory);
+                        analysisResult = analysisResultRepository.save(analysisResult);
 
-                        int readabilityScore =
-                                        readabilityAnalyzeService.analyze(
-                                                        repositoryDirectory);
+                        AnalysisResultDetail detail = new AnalysisResultDetail();
+                        detail.setAnalysisResult(analysisResult);
+                        detail.setLanguage(language);
+                        detail.setFramework(framework);
+                        detail.setReadmeScore(readmeScore);
+                        detail.setGitScore(gitScore);
+                        detail.setSecurityScore(securityScore);
+                        detail.setNamingScore(namingScore);
+                        detail.setReadabilityScore(readabilityScore);
+                        detail.setDuplicateCodeScore(duplicateCodeScore);
+                        detail.setTotalScore(totalScore);
+                        detail.setCreatedAt(now);
 
-                        int duplicateCodeScore =
-                                        duplicateCodeAnalyzeService.analyze(
-                                                        repositoryDirectory);
+                        analysisResultDetailRepository.save(detail);
 
-                        int totalScore =
-                                        scoreCalculateService.calculate(
-                                                        language,
-                                                        framework,
-                                                        readmeScore,
-                                                        gitScore,
-                                                        securityScore,
-                                                        namingScore,
-                                                        readabilityScore,
-                                                        duplicateCodeScore);
-
-                        System.out.println(
-                                        "Total Score : "
-                                                        + totalScore);
+                        System.out.println("Total Score : " + totalScore);
 
                         return new AnalyzeResult(
                                         language,
@@ -156,13 +142,8 @@ public class AnalyzeService {
                 } finally {
 
                         try {
-
-                                repositoryDeleteService
-                                                .deleteRepository(
-                                                                repositoryDirectory);
-
+                                repositoryDeleteService.deleteRepository(repositoryDirectory);
                         } catch (Exception e) {
-
                                 e.printStackTrace();
                         }
                 }
