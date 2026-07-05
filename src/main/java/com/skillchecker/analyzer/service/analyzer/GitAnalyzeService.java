@@ -57,18 +57,31 @@ public class GitAnalyzeService {
                         int commitCount) {
 
                 if (commitCount >= 100) {
-
                         return 15;
                 }
 
                 if (commitCount >= 50) {
-
                         return 10;
                 }
 
                 if (commitCount >= 20) {
-
                         return 5;
+                }
+
+                if (commitCount >= 10) {
+                        return 4;
+                }
+
+                if (commitCount >= 5) {
+                        return 3;
+                }
+
+                if (commitCount >= 2) {
+                        return 2;
+                }
+
+                if (commitCount >= 1) {
+                        return 1;
                 }
 
                 return 0;
