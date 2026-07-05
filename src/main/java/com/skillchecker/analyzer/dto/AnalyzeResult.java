@@ -1,17 +1,27 @@
 package com.skillchecker.analyzer.dto;
 
+import java.util.List;
+
 public class AnalyzeResult {
 
     private String framework;
 
-    private int score;
+    private int totalScore;
+
+    private String aiComment;
+
+    private List<AnalysisDetail> details;
 
     public AnalyzeResult(
             String framework,
-            int score) {
+            int totalScore,
+            String aiComment,
+            List<AnalysisDetail> details) {
 
         this.framework = framework;
-        this.score = score;
+        this.totalScore = totalScore;
+        this.aiComment = aiComment;
+        this.details = details;
     }
 
     public String getFramework() {
@@ -25,14 +35,36 @@ public class AnalyzeResult {
         this.framework = framework;
     }
 
-    public int getScore() {
+    public int getTotalScore() {
 
-        return score;
+        return totalScore;
     }
 
-    public void setScore(
-            int score) {
+    public void setTotalScore(
+            int totalScore) {
 
-        this.score = score;
+        this.totalScore = totalScore;
+    }
+
+    public String getAiComment() {
+
+        return aiComment;
+    }
+
+    public void setAiComment(
+            String aiComment) {
+
+        this.aiComment = aiComment;
+    }
+
+    public List<AnalysisDetail> getDetails() {
+
+        return details;
+    }
+
+    public void setDetails(
+            List<AnalysisDetail> details) {
+
+        this.details = details;
     }
 }
