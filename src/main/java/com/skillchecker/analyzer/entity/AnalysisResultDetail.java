@@ -29,8 +29,6 @@ public class AnalysisResultDetail {
             nullable = false)
     private AnalysisResult analysisResult;
 
-    private String language;
-
     private String framework;
 
     private Integer readmeScore;
