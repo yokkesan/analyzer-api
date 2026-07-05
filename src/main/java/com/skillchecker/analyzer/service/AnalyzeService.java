@@ -14,7 +14,6 @@ import com.skillchecker.analyzer.repository.AnalysisResultRepository;
 import com.skillchecker.analyzer.service.analyzer.DuplicateCodeAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.FrameworkAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.GitAnalyzeService;
-import com.skillchecker.analyzer.service.analyzer.LanguageAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.NamingAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.ReadabilityAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.ReadmeAnalyzeService;
@@ -26,7 +25,6 @@ public class AnalyzeService {
 
         private final GitCloneService gitCloneService;
         private final RepositoryDeleteService repositoryDeleteService;
-        private final LanguageAnalyzeService languageAnalyzeService;
         private final FrameworkAnalyzeService frameworkAnalyzeService;
         private final ReadmeAnalyzeService readmeAnalyzeService;
         private final GitAnalyzeService gitAnalyzeService;
@@ -41,7 +39,6 @@ public class AnalyzeService {
         public AnalyzeService(
                         GitCloneService gitCloneService,
                         RepositoryDeleteService repositoryDeleteService,
-                        LanguageAnalyzeService languageAnalyzeService,
                         FrameworkAnalyzeService frameworkAnalyzeService,
                         ReadmeAnalyzeService readmeAnalyzeService,
                         GitAnalyzeService gitAnalyzeService,
@@ -55,7 +52,6 @@ public class AnalyzeService {
 
                 this.gitCloneService = gitCloneService;
                 this.repositoryDeleteService = repositoryDeleteService;
-                this.languageAnalyzeService = languageAnalyzeService;
                 this.frameworkAnalyzeService = frameworkAnalyzeService;
                 this.readmeAnalyzeService = readmeAnalyzeService;
                 this.gitAnalyzeService = gitAnalyzeService;
@@ -79,7 +75,6 @@ public class AnalyzeService {
 
                         gitCloneService.cloneRepository(repositoryId, githubUrl);
 
-                        String language = languageAnalyzeService.analyze(repositoryDirectory);
                         String framework = frameworkAnalyzeService.analyze(repositoryDirectory);
 
                         int readmeScore = readmeAnalyzeService.analyze(repositoryDirectory);
@@ -90,7 +85,6 @@ public class AnalyzeService {
                         int duplicateCodeScore = duplicateCodeAnalyzeService.analyze(repositoryDirectory);
 
                         int totalScore = scoreCalculateService.calculate(
-                                        language,
                                         framework,
                                         readmeScore,
                                         gitScore,
@@ -110,7 +104,6 @@ public class AnalyzeService {
 
                         AnalysisResultDetail detail = new AnalysisResultDetail();
                         detail.setAnalysisResult(analysisResult);
-                        detail.setLanguage(language);
                         detail.setFramework(framework);
                         detail.setReadmeScore(readmeScore);
                         detail.setGitScore(gitScore);
@@ -126,7 +119,6 @@ public class AnalyzeService {
                         System.out.println("Total Score : " + totalScore);
 
                         return new AnalyzeResult(
-                                        language,
                                         framework,
                                         totalScore);
 
@@ -135,7 +127,6 @@ public class AnalyzeService {
                         e.printStackTrace();
 
                         return new AnalyzeResult(
-                                        "Unknown",
                                         "Unknown",
                                         0);
 
