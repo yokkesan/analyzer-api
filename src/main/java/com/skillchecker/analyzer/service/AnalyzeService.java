@@ -2,10 +2,12 @@ package com.skillchecker.analyzer.service;
 
 import java.io.File;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.skillchecker.analyzer.dto.AnalysisDetail;
 import com.skillchecker.analyzer.dto.AnalyzeResult;
 import com.skillchecker.analyzer.entity.AnalysisResult;
 import com.skillchecker.analyzer.entity.AnalysisResultDetail;
@@ -19,6 +21,7 @@ import com.skillchecker.analyzer.service.analyzer.ReadabilityAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.ReadmeAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.ScoreCalculateService;
 import com.skillchecker.analyzer.service.analyzer.SecurityAnalyzeService;
+import com.skillchecker.analyzer.service.analyzer.comment.AnalysisCommentCreateService;
 
 @Service
 public class AnalyzeService {
@@ -35,6 +38,7 @@ public class AnalyzeService {
         private final ScoreCalculateService scoreCalculateService;
         private final AnalysisResultRepository analysisResultRepository;
         private final AnalysisResultDetailRepository analysisResultDetailRepository;
+        private final AnalysisCommentCreateService analysisCommentCreateService;
 
         public AnalyzeService(
                         GitCloneService gitCloneService,
@@ -48,7 +52,8 @@ public class AnalyzeService {
                         DuplicateCodeAnalyzeService duplicateCodeAnalyzeService,
                         ScoreCalculateService scoreCalculateService,
                         AnalysisResultRepository analysisResultRepository,
-                        AnalysisResultDetailRepository analysisResultDetailRepository) {
+                        AnalysisResultDetailRepository analysisResultDetailRepository,
+                        AnalysisCommentCreateService analysisCommentCreateService) {
 
                 this.gitCloneService = gitCloneService;
                 this.repositoryDeleteService = repositoryDeleteService;
@@ -62,65 +67,136 @@ public class AnalyzeService {
                 this.scoreCalculateService = scoreCalculateService;
                 this.analysisResultRepository = analysisResultRepository;
                 this.analysisResultDetailRepository = analysisResultDetailRepository;
+                this.analysisCommentCreateService = analysisCommentCreateService;
         }
 
         @Transactional
-        public AnalyzeResult analyze(Long repositoryId, String githubUrl) {
+        public AnalyzeResult analyze(
+                        Long repositoryId,
+                        String githubUrl) {
 
-                File repositoryDirectory = new File("repositories/" + repositoryId);
+                File repositoryDirectory =
+                                new File("repositories/" + repositoryId);
 
                 try {
 
                         System.out.println("Analyze Service Start");
 
-                        gitCloneService.cloneRepository(repositoryId, githubUrl);
+                        gitCloneService.cloneRepository(
+                                        repositoryId,
+                                        githubUrl);
 
-                        String framework = frameworkAnalyzeService.analyze(repositoryDirectory);
+                        String framework =
+                                        frameworkAnalyzeService.analyze(
+                                                        repositoryDirectory);
 
-                        int readmeScore = readmeAnalyzeService.analyze(repositoryDirectory);
-                        int gitScore = gitAnalyzeService.analyze(repositoryDirectory);
-                        int securityScore = securityAnalyzeService.analyze(repositoryDirectory);
-                        int namingScore = namingAnalyzeService.analyze(repositoryDirectory);
-                        int readabilityScore = readabilityAnalyzeService.analyze(repositoryDirectory);
-                        int duplicateCodeScore = duplicateCodeAnalyzeService.analyze(repositoryDirectory);
+                        int readmeScore =
+                                        readmeAnalyzeService.analyze(
+                                                        repositoryDirectory);
 
-                        int totalScore = scoreCalculateService.calculate(
-                                        framework,
-                                        readmeScore,
-                                        gitScore,
-                                        securityScore,
-                                        namingScore,
-                                        readabilityScore,
+                        int gitScore =
+                                        gitAnalyzeService.analyze(
+                                                        repositoryDirectory);
+
+                        int securityScore =
+                                        securityAnalyzeService.analyze(
+                                                        repositoryDirectory);
+
+                        int namingScore =
+                                        namingAnalyzeService.analyze(
+                                                        repositoryDirectory);
+
+                        int readabilityScore =
+                                        readabilityAnalyzeService.analyze(
+                                                        repositoryDirectory);
+
+                        int duplicateCodeScore =
+                                        duplicateCodeAnalyzeService.analyze(
+                                                        repositoryDirectory);
+
+                        int totalScore =
+                                        scoreCalculateService.calculate(
+                                                        framework,
+                                                        readmeScore,
+                                                        gitScore,
+                                                        securityScore,
+                                                        namingScore,
+                                                        readabilityScore,
+                                                        duplicateCodeScore);
+
+                        List<AnalysisDetail> details =
+                                        analysisCommentCreateService.create(
+                                                        gitScore,
+                                                        namingScore,
+                                                        readmeScore,
+                                                        readabilityScore,
+                                                        securityScore,
+                                                        duplicateCodeScore);
+
+                        LocalDateTime now =
+                                        LocalDateTime.now();
+
+                        AnalysisResult analysisResult =
+                                        new AnalysisResult();
+
+                        analysisResult.setRepositoryUrl(
+                                        githubUrl);
+
+                        analysisResult.setTotalScore(
+                                        totalScore);
+
+                        analysisResult.setCreatedAt(
+                                        now);
+
+                        analysisResult =
+                                        analysisResultRepository.save(
+                                                        analysisResult);
+
+                        AnalysisResultDetail detail =
+                                        new AnalysisResultDetail();
+
+                        detail.setAnalysisResult(
+                                        analysisResult);
+
+                        detail.setFramework(
+                                        framework);
+
+                        detail.setReadmeScore(
+                                        readmeScore);
+
+                        detail.setGitScore(
+                                        gitScore);
+
+                        detail.setSecurityScore(
+                                        securityScore);
+
+                        detail.setNamingScore(
+                                        namingScore);
+
+                        detail.setReadabilityScore(
+                                        readabilityScore);
+
+                        detail.setDuplicateCodeScore(
                                         duplicateCodeScore);
 
-                        LocalDateTime now = LocalDateTime.now();
+                        detail.setTotalScore(
+                                        totalScore);
 
-                        AnalysisResult analysisResult = new AnalysisResult();
-                        analysisResult.setRepositoryUrl(githubUrl);
-                        analysisResult.setTotalScore(totalScore);
-                        analysisResult.setCreatedAt(now);
+                        detail.setCreatedAt(
+                                        now);
 
-                        analysisResult = analysisResultRepository.save(analysisResult);
+                        analysisResultDetailRepository.save(
+                                        detail);
 
-                        AnalysisResultDetail detail = new AnalysisResultDetail();
-                        detail.setAnalysisResult(analysisResult);
-                        detail.setFramework(framework);
-                        detail.setReadmeScore(readmeScore);
-                        detail.setGitScore(gitScore);
-                        detail.setSecurityScore(securityScore);
-                        detail.setNamingScore(namingScore);
-                        detail.setReadabilityScore(readabilityScore);
-                        detail.setDuplicateCodeScore(duplicateCodeScore);
-                        detail.setTotalScore(totalScore);
-                        detail.setCreatedAt(now);
-
-                        analysisResultDetailRepository.save(detail);
-
-                        System.out.println("Total Score : " + totalScore);
+                        System.out.println(
+                                        "Total Score : "
+                                                        + totalScore);
 
                         return new AnalyzeResult(
                                         framework,
-                                        totalScore);
+                                        totalScore,
+                                        null,
+                                        details);
 
                 } catch (Exception e) {
 
@@ -128,13 +204,19 @@ public class AnalyzeService {
 
                         return new AnalyzeResult(
                                         "Unknown",
-                                        0);
+                                        0,
+                                        null,
+                                        List.of());
 
                 } finally {
 
                         try {
-                                repositoryDeleteService.deleteRepository(repositoryDirectory);
+
+                                repositoryDeleteService.deleteRepository(
+                                                repositoryDirectory);
+
                         } catch (Exception e) {
+
                                 e.printStackTrace();
                         }
                 }
