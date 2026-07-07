@@ -21,7 +21,7 @@ import com.skillchecker.analyzer.service.analyzer.ReadabilityAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.ReadmeAnalyzeService;
 import com.skillchecker.analyzer.service.analyzer.ScoreCalculateService;
 import com.skillchecker.analyzer.service.analyzer.SecurityAnalyzeService;
-import com.skillchecker.analyzer.service.analyzer.comment.AnalysisCommentCreateService;
+import com.skillchecker.analyzer.service.analyzer.AnalysisCommentCreateService;
 
 @Service
 public class AnalyzeService {

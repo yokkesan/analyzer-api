@@ -7,12 +7,15 @@ import com.skillchecker.analyzer.dto.AnalysisDetail;
 @Service
 public class ReadabilityCommentService {
 
+    private static final int MAX_SCORE = 10;
+
     public AnalysisDetail create(
             int score) {
 
         return new AnalysisDetail(
                 "可読性",
                 score,
+                MAX_SCORE,
                 createMessage(score));
     }
 
