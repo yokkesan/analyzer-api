@@ -6,15 +6,19 @@ public class AnalysisDetail {
 
     private int score;
 
+    private int maxScore;
+
     private String message;
 
     public AnalysisDetail(
-        String category,
-        int score,
-        String message
-    ) {
+            String category,
+            int score,
+            int maxScore,
+            String message) {
+
         this.category = category;
         this.score = score;
+        this.maxScore = maxScore;
         this.message = message;
     }
 
@@ -24,6 +28,10 @@ public class AnalysisDetail {
 
     public int getScore() {
         return score;
+    }
+
+    public int getMaxScore() {
+        return maxScore;
     }
 
     public String getMessage() {

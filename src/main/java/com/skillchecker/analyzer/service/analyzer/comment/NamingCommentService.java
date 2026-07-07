@@ -7,12 +7,15 @@ import com.skillchecker.analyzer.dto.AnalysisDetail;
 @Service
 public class NamingCommentService {
 
+    private static final int MAX_SCORE = 10;
+
     public AnalysisDetail create(
             int score) {
 
         return new AnalysisDetail(
                 "命名規則",
                 score,
+                MAX_SCORE,
                 createMessage(score));
     }
 
