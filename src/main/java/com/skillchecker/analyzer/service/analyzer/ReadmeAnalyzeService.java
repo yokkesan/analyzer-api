@@ -2,8 +2,11 @@ package com.skillchecker.analyzer.service.analyzer;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
+
+import com.skillchecker.analyzer.dto.AnalysisIssue;
 
 @Service
 public class ReadmeAnalyzeService {
@@ -47,6 +50,28 @@ public class ReadmeAnalyzeService {
 
             return 0;
         }
+    }
+
+    public List<AnalysisIssue> getIssues(
+            File repositoryDirectory) {
+
+        File readmeFile =
+                new File(
+                        repositoryDirectory,
+                        "README.md");
+
+        if (readmeFile.exists()) {
+
+            return List.of();
+        }
+
+        return List.of(
+                new AnalysisIssue(
+                        "README.md",
+                        0,
+                        0,
+                        "",
+                        "README.md が存在しません"));
     }
 
     private int calculateLengthScore(

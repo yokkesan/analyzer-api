@@ -6,13 +6,14 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.skillchecker.analyzer.dto.AnalysisDetail;
-
+import com.skillchecker.analyzer.dto.AnalysisIssue;
+import com.skillchecker.analyzer.service.analyzer.comment.DuplicateCodeCommentService;
 import com.skillchecker.analyzer.service.analyzer.comment.GitCommentService;
 import com.skillchecker.analyzer.service.analyzer.comment.NamingCommentService;
 import com.skillchecker.analyzer.service.analyzer.comment.ReadabilityCommentService;
 import com.skillchecker.analyzer.service.analyzer.comment.ReadmeCommentService;
 import com.skillchecker.analyzer.service.analyzer.comment.SecurityCommentService;
-import com.skillchecker.analyzer.service.analyzer.comment.DuplicateCodeCommentService;
+
 @Service
 public class AnalysisCommentCreateService {
 
@@ -45,27 +46,45 @@ public class AnalysisCommentCreateService {
                         int readmeScore,
                         int readabilityScore,
                         int securityScore,
-                        int duplicateCodeScore) {
+                        int duplicateCodeScore,
+                        List<AnalysisIssue> gitIssues,
+                        List<AnalysisIssue> namingIssues,
+                        List<AnalysisIssue> readmeIssues,
+                        List<AnalysisIssue> readabilityIssues,
+                        List<AnalysisIssue> securityIssues,
+                        List<AnalysisIssue> duplicateCodeIssues) {
 
                 List<AnalysisDetail> details = new ArrayList<>();
 
                 details.add(
-                                gitCommentService.create(gitScore));
+                                gitCommentService.create(
+                                                gitScore,
+                                                gitIssues));
 
                 details.add(
-                                namingCommentService.create(namingScore));
+                                namingCommentService.create(
+                                                namingScore,
+                                                namingIssues));
 
                 details.add(
-                                readmeCommentService.create(readmeScore));
+                                readmeCommentService.create(
+                                                readmeScore,
+                                                readmeIssues));
 
                 details.add(
-                                readabilityCommentService.create(readabilityScore));
+                                readabilityCommentService.create(
+                                                readabilityScore,
+                                                readabilityIssues));
 
                 details.add(
-                                securityCommentService.create(securityScore));
+                                securityCommentService.create(
+                                                securityScore,
+                                                securityIssues));
 
                 details.add(
-                                duplicateCodeCommentService.create(duplicateCodeScore));
+                                duplicateCodeCommentService.create(
+                                                duplicateCodeScore,
+                                                duplicateCodeIssues));
 
                 return details;
         }

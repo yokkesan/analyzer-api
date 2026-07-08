@@ -1,9 +1,12 @@
 package com.skillchecker.analyzer.service.analyzer;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.skillchecker.analyzer.dto.AnalysisIssue;
 import com.skillchecker.analyzer.service.analyzer.naming.ClassNamingChecker;
 import com.skillchecker.analyzer.service.analyzer.naming.ConstantNamingChecker;
 import com.skillchecker.analyzer.service.analyzer.naming.MethodNamingChecker;
@@ -56,6 +59,12 @@ public class NamingAnalyzeService {
 
                 return calculateScore(
                                 violationCount);
+        }
+
+        public List<AnalysisIssue> getIssues(
+                        File repositoryDirectory) {
+
+                return new ArrayList<>();
         }
 
         private int calculateScore(
