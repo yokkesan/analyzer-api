@@ -1,8 +1,11 @@
 package com.skillchecker.analyzer.service.analyzer.comment;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.skillchecker.analyzer.dto.AnalysisDetail;
+import com.skillchecker.analyzer.dto.AnalysisIssue;
 
 @Service
 public class ReadmeCommentService {
@@ -10,13 +13,16 @@ public class ReadmeCommentService {
     private static final int MAX_SCORE = 10;
 
     public AnalysisDetail create(
-            int score) {
+            int score,
+            List<AnalysisIssue> issues) {
 
         return new AnalysisDetail(
                 "README",
                 score,
                 MAX_SCORE,
-                createMessage(score));
+                createMessage(score),
+                createComment(issues),
+                issues);
     }
 
     private String createMessage(
@@ -31,5 +37,15 @@ public class ReadmeCommentService {
         }
 
         return "READMEの内容を充実させる余地があります";
+    }
+
+    private String createComment(
+            List<AnalysisIssue> issues) {
+
+        if (issues.isEmpty()) {
+            return "対象がありませんでした";
+        }
+
+        return issues.size() + "件検出されました";
     }
 }

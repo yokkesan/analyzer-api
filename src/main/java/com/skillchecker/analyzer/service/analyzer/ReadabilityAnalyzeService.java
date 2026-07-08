@@ -1,9 +1,12 @@
 package com.skillchecker.analyzer.service.analyzer;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.skillchecker.analyzer.dto.AnalysisIssue;
 import com.skillchecker.analyzer.service.analyzer.readability.CommentChecker;
 import com.skillchecker.analyzer.service.analyzer.readability.LineLengthChecker;
 import com.skillchecker.analyzer.service.analyzer.readability.MethodLengthChecker;
@@ -56,6 +59,30 @@ public class ReadabilityAnalyzeService {
 
                 return calculateScore(
                                 violationCount);
+        }
+
+        public List<AnalysisIssue> getIssues(
+                        File repositoryDirectory) {
+
+                List<AnalysisIssue> issues = new ArrayList<>();
+
+                issues.addAll(
+                                lineLengthChecker.getIssues(
+                                                repositoryDirectory));
+
+                issues.addAll(
+                                methodLengthChecker.getIssues(
+                                                repositoryDirectory));
+
+                issues.addAll(
+                                nestingChecker.getIssues(
+                                                repositoryDirectory));
+
+                issues.addAll(
+                                commentChecker.getIssues(
+                                                repositoryDirectory));
+
+                return issues;
         }
 
         private int calculateScore(

@@ -3,8 +3,11 @@ package com.skillchecker.analyzer.service.analyzer;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
+
+import com.skillchecker.analyzer.dto.AnalysisIssue;
 
 @Service
 public class GitAnalyzeService {
@@ -16,31 +19,8 @@ public class GitAnalyzeService {
 
                 try {
 
-                        ProcessBuilder processBuilder = new ProcessBuilder(
-                                        "git",
-                                        "rev-list",
-                                        "--count",
-                                        "HEAD");
-
-                        processBuilder.directory(
+                        int commitCount = getCommitCount(
                                         repositoryDirectory);
-
-                        Process process = processBuilder.start();
-
-                        BufferedReader reader = new BufferedReader(
-                                        new InputStreamReader(
-                                                        process.getInputStream()));
-
-                        String line = reader.readLine();
-
-                        process.waitFor();
-
-                        if (line == null) {
-
-                                return 0;
-                        }
-
-                        int commitCount = Integer.parseInt(line);
 
                         return calculateScore(
                                         commitCount);
@@ -51,6 +31,69 @@ public class GitAnalyzeService {
 
                         return 0;
                 }
+        }
+
+        public List<AnalysisIssue> getIssues(
+                        File repositoryDirectory) {
+
+                try {
+
+                        int commitCount = getCommitCount(
+                                        repositoryDirectory);
+
+                        if (commitCount >= 20) {
+
+                                return List.of();
+                        }
+
+                        return List.of(
+                                        new AnalysisIssue(
+                                                        ".git",
+                                                        0,
+                                                        0,
+                                                        "",
+                                                        "コミット数が少ないです（"
+                                                                        + commitCount
+                                                                        + "件）"));
+
+                } catch (Exception e) {
+
+                        e.printStackTrace();
+
+                        return List.of();
+                }
+        }
+
+        private int getCommitCount(
+                        File repositoryDirectory)
+                        throws Exception {
+
+                ProcessBuilder processBuilder = new ProcessBuilder(
+                                "git",
+                                "rev-list",
+                                "--count",
+                                "HEAD");
+
+                processBuilder.directory(
+                                repositoryDirectory);
+
+                Process process = processBuilder.start();
+
+                BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(
+                                                process.getInputStream()));
+
+                String line = reader.readLine();
+
+                process.waitFor();
+
+                if (line == null) {
+
+                        return 0;
+                }
+
+                return Integer.parseInt(
+                                line);
         }
 
         private int calculateScore(

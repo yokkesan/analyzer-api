@@ -2,9 +2,12 @@ package com.skillchecker.analyzer.service.analyzer;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+
+import com.skillchecker.analyzer.dto.AnalysisIssue;
 
 @Service
 public class SecurityAnalyzeService {
@@ -18,7 +21,8 @@ public class SecurityAnalyzeService {
 
             int riskCount =
                     scanDirectory(
-                            repositoryDirectory);
+                            repositoryDirectory,
+                            new ArrayList<>());
 
             return calculateScore(
                     riskCount);
@@ -31,8 +35,31 @@ public class SecurityAnalyzeService {
         }
     }
 
+    public List<AnalysisIssue> getIssues(
+            File repositoryDirectory) {
+
+        try {
+
+            List<AnalysisIssue> issues =
+                    new ArrayList<>();
+
+            scanDirectory(
+                    repositoryDirectory,
+                    issues);
+
+            return issues;
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            return List.of();
+        }
+    }
+
     private int scanDirectory(
-            File directory)
+            File directory,
+            List<AnalysisIssue> issues)
             throws Exception {
 
         int riskCount = 0;
@@ -51,7 +78,8 @@ public class SecurityAnalyzeService {
 
                 riskCount +=
                         scanDirectory(
-                                file);
+                                file,
+                                issues);
 
                 continue;
             }
@@ -70,13 +98,27 @@ public class SecurityAnalyzeService {
                     Files.readAllLines(
                             file.toPath());
 
-            for (String line : lines) {
+            for (int i = 0; i < lines.size(); i++) {
+
+                String line =
+                        lines.get(i);
 
                 String lowerLine =
                         line.toLowerCase();
 
+                int lineNumber =
+                        i + 1;
+
                 if (lowerLine.contains(
                         "password")) {
+
+                    issues.add(
+                            new AnalysisIssue(
+                                    file.getPath(),
+                                    lineNumber,
+                                    lineNumber,
+                                    line,
+                                    "passwordが含まれています"));
 
                     riskCount++;
                 }
@@ -84,11 +126,27 @@ public class SecurityAnalyzeService {
                 if (lowerLine.contains(
                         "secret")) {
 
+                    issues.add(
+                            new AnalysisIssue(
+                                    file.getPath(),
+                                    lineNumber,
+                                    lineNumber,
+                                    line,
+                                    "secretが含まれています"));
+
                     riskCount++;
                 }
 
                 if (lowerLine.contains(
                         "api_key")) {
+
+                    issues.add(
+                            new AnalysisIssue(
+                                    file.getPath(),
+                                    lineNumber,
+                                    lineNumber,
+                                    line,
+                                    "api_keyが含まれています"));
 
                     riskCount++;
                 }
@@ -96,11 +154,27 @@ public class SecurityAnalyzeService {
                 if (lowerLine.contains(
                         "access_key")) {
 
+                    issues.add(
+                            new AnalysisIssue(
+                                    file.getPath(),
+                                    lineNumber,
+                                    lineNumber,
+                                    line,
+                                    "access_keyが含まれています"));
+
                     riskCount++;
                 }
 
                 if (lowerLine.contains(
                         "private_key")) {
+
+                    issues.add(
+                            new AnalysisIssue(
+                                    file.getPath(),
+                                    lineNumber,
+                                    lineNumber,
+                                    line,
+                                    "private_keyが含まれています"));
 
                     riskCount++;
                 }
