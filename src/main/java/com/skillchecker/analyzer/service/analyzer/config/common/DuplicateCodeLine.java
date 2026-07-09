@@ -1,4 +1,4 @@
-package com.skillchecker.analyzer.service.analyzer.config;
+package com.skillchecker.analyzer.service.analyzer.config.common;
 
 public class DuplicateCodeLine {
 
