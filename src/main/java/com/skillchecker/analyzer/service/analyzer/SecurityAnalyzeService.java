@@ -103,14 +103,11 @@ public class SecurityAnalyzeService {
                 String line =
                         lines.get(i);
 
-                String lowerLine =
-                        line.toLowerCase();
-
                 int lineNumber =
                         i + 1;
 
-                if (lowerLine.contains(
-                        "password")) {
+                if (isHardcodedSecret(
+                        line)) {
 
                     issues.add(
                             new AnalysisIssue(
@@ -118,63 +115,7 @@ public class SecurityAnalyzeService {
                                     lineNumber,
                                     lineNumber,
                                     line,
-                                    "passwordが含まれています"));
-
-                    riskCount++;
-                }
-
-                if (lowerLine.contains(
-                        "secret")) {
-
-                    issues.add(
-                            new AnalysisIssue(
-                                    file.getPath(),
-                                    lineNumber,
-                                    lineNumber,
-                                    line,
-                                    "secretが含まれています"));
-
-                    riskCount++;
-                }
-
-                if (lowerLine.contains(
-                        "api_key")) {
-
-                    issues.add(
-                            new AnalysisIssue(
-                                    file.getPath(),
-                                    lineNumber,
-                                    lineNumber,
-                                    line,
-                                    "api_keyが含まれています"));
-
-                    riskCount++;
-                }
-
-                if (lowerLine.contains(
-                        "access_key")) {
-
-                    issues.add(
-                            new AnalysisIssue(
-                                    file.getPath(),
-                                    lineNumber,
-                                    lineNumber,
-                                    line,
-                                    "access_keyが含まれています"));
-
-                    riskCount++;
-                }
-
-                if (lowerLine.contains(
-                        "private_key")) {
-
-                    issues.add(
-                            new AnalysisIssue(
-                                    file.getPath(),
-                                    lineNumber,
-                                    lineNumber,
-                                    line,
-                                    "private_keyが含まれています"));
+                                    "機密情報がハードコードされています"));
 
                     riskCount++;
                 }
@@ -182,6 +123,41 @@ public class SecurityAnalyzeService {
         }
 
         return riskCount;
+    }
+
+    private boolean isHardcodedSecret(
+            String line) {
+
+        String lowerLine =
+                line.toLowerCase()
+                        .trim();
+
+        if (!(lowerLine.contains(
+                "password")
+                || lowerLine.contains(
+                        "secret")
+                || lowerLine.contains(
+                        "api_key")
+                || lowerLine.contains(
+                        "access_key")
+                || lowerLine.contains(
+                        "private_key"))) {
+
+            return false;
+        }
+
+        if (lowerLine.contains(
+                "env(")
+                || lowerLine.contains(
+                        "system.getenv")
+                || lowerLine.contains(
+                        "${")) {
+
+            return false;
+        }
+
+        return lowerLine.matches(
+                ".*(password|secret|api_key|access_key|private_key).*[:=].+");
     }
 
     private boolean isTargetFile(

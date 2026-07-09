@@ -10,34 +10,31 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import com.skillchecker.analyzer.dto.AnalysisIssue;
-import com.skillchecker.analyzer.service.analyzer.config.DuplicateCodeLine;
-import com.skillchecker.analyzer.service.analyzer.config.IgnoreLineConfig;
-import com.skillchecker.analyzer.service.analyzer.config.TargetFileConfig;
+import com.skillchecker.analyzer.service.analyzer.config.common.DuplicateCodeLine;
+import com.skillchecker.analyzer.service.analyzer.config.common.IgnoreLineConfigFactory;
+import com.skillchecker.analyzer.service.analyzer.config.common.LanguageIgnoreLineConfig;
+import com.skillchecker.analyzer.service.analyzer.config.common.TargetFileConfig;
 
 @Service
 public class DuplicateCodeAnalyzeService {
 
         private static final int MAX_SCORE = 10;
-        private static final int BLOCK_SIZE = 10;
-        private static final int LINE_DUPLICATE_THRESHOLD = 10;
+
+        private static final int BLOCK_SIZE = 5;
 
         public int analyze(
                         File repositoryDirectory) {
 
                 try {
 
-                        List<DuplicateCodeLine> allLines = collectTargetLines(
+                        List<List<DuplicateCodeLine>> fileLineGroups = collectTargetLineGroups(
                                         repositoryDirectory);
 
                         int blockDuplicateCount = countDuplicateBlocks(
-                                        allLines);
-
-                        int lineDuplicateCount = countHeavyDuplicateLines(
-                                        allLines);
+                                        fileLineGroups);
 
                         return calculateScore(
-                                        blockDuplicateCount,
-                                        lineDuplicateCount);
+                                        blockDuplicateCount);
 
                 } catch (Exception e) {
 
@@ -52,39 +49,38 @@ public class DuplicateCodeAnalyzeService {
 
                 try {
 
-                        List<DuplicateCodeLine> allLines = collectTargetLines(
+                        List<List<DuplicateCodeLine>> fileLineGroups = collectTargetLineGroups(
                                         repositoryDirectory);
 
-                        Map<String, List<DuplicateCodeLine>> lineMap = new HashMap<>();
-
-                        for (DuplicateCodeLine line : allLines) {
-
-                                lineMap.computeIfAbsent(
-                                                line.getContent(),
-                                                key -> new ArrayList<>())
-                                                .add(line);
-                        }
+                        Map<String, List<DuplicateCodeLine>> blockMap = createBlockMap(
+                                        fileLineGroups);
 
                         List<AnalysisIssue> issues = new ArrayList<>();
 
-                        for (List<DuplicateCodeLine> duplicateLines : lineMap.values()) {
+                        for (Map.Entry<String, List<DuplicateCodeLine>> entry : blockMap
+                                        .entrySet()) {
 
-                                if (duplicateLines.size() < LINE_DUPLICATE_THRESHOLD) {
+                                List<DuplicateCodeLine> duplicates = entry.getValue();
+
+                                if (duplicates.size() < 2) {
 
                                         continue;
                                 }
 
-                                DuplicateCodeLine first = duplicateLines.get(0);
+                                DuplicateCodeLine first = duplicates.get(
+                                                0);
 
                                 issues.add(
                                                 new AnalysisIssue(
                                                                 first.getFile(),
                                                                 first.getLineNumber(),
-                                                                first.getLineNumber(),
-                                                                first.getContent(),
-                                                                "重複コードが "
-                                                                                + duplicateLines.size()
-                                                                                + " 回出現しています"));
+                                                                first.getLineNumber()
+                                                                                + BLOCK_SIZE
+                                                                                - 1,
+                                                                entry.getKey(),
+                                                                "重複コードの可能性があります（"
+                                                                                + duplicates.size()
+                                                                                + "箇所）"));
                         }
 
                         return issues;
@@ -97,25 +93,25 @@ public class DuplicateCodeAnalyzeService {
                 }
         }
 
-        private List<DuplicateCodeLine> collectTargetLines(
+        private List<List<DuplicateCodeLine>> collectTargetLineGroups(
                         File directory)
                         throws Exception {
 
-                List<DuplicateCodeLine> allLines = new ArrayList<>();
+                List<List<DuplicateCodeLine>> fileLineGroups = new ArrayList<>();
 
                 File[] files = directory.listFiles();
 
                 if (files == null) {
 
-                        return allLines;
+                        return fileLineGroups;
                 }
 
                 for (File file : files) {
 
                         if (file.isDirectory()) {
 
-                                allLines.addAll(
-                                                collectTargetLines(
+                                fileLineGroups.addAll(
+                                                collectTargetLineGroups(
                                                                 file));
 
                                 continue;
@@ -127,62 +123,93 @@ public class DuplicateCodeAnalyzeService {
                                 continue;
                         }
 
-                        List<String> lines = Files.readAllLines(
-                                        file.toPath());
+                        List<DuplicateCodeLine> fileLines = collectTargetLinesFromFile(
+                                        file);
 
-                        for (int i = 0; i < lines.size(); i++) {
+                        if (fileLines.size() < BLOCK_SIZE) {
 
-                                String normalizedLine = normalize(
-                                                lines.get(i));
+                                continue;
+                        }
 
-                                if (IgnoreLineConfig.shouldIgnoreLine(
-                                                normalizedLine)) {
+                        fileLineGroups.add(
+                                        fileLines);
+                }
 
-                                        continue;
-                                }
+                return fileLineGroups;
+        }
 
-                                allLines.add(
-                                                new DuplicateCodeLine(
-                                                                file.getPath(),
-                                                                i + 1,
-                                                                normalizedLine));
+        private List<DuplicateCodeLine> collectTargetLinesFromFile(
+                        File file)
+                        throws Exception {
+
+                List<DuplicateCodeLine> fileLines = new ArrayList<>();
+
+                List<String> lines = Files.readAllLines(
+                                file.toPath());
+
+                LanguageIgnoreLineConfig config = IgnoreLineConfigFactory.get(
+                                file);
+
+                for (int i = 0; i < lines.size(); i++) {
+
+                        String normalizedLine = normalize(
+                                        lines.get(
+                                                        i));
+
+                        if (config != null
+                                        && config.shouldIgnoreLine(
+                                                        normalizedLine)) {
+
+                                continue;
+                        }
+
+                        fileLines.add(
+                                        new DuplicateCodeLine(
+                                                        file.getPath(),
+                                                        i + 1,
+                                                        normalizedLine));
+                }
+
+                return fileLines;
+        }
+
+        private Map<String, List<DuplicateCodeLine>> createBlockMap(
+                        List<List<DuplicateCodeLine>> fileLineGroups) {
+
+                Map<String, List<DuplicateCodeLine>> blockMap = new HashMap<>();
+
+                for (List<DuplicateCodeLine> fileLines : fileLineGroups) {
+
+                        for (int i = 0; i <= fileLines.size()
+                                        - BLOCK_SIZE; i++) {
+
+                                String blockText = createBlockText(
+                                                fileLines,
+                                                i);
+
+                                blockMap.computeIfAbsent(
+                                                blockText,
+                                                key -> new ArrayList<>())
+                                                .add(
+                                                                fileLines.get(
+                                                                                i));
                         }
                 }
 
-                return allLines;
+                return blockMap;
         }
 
         private int countDuplicateBlocks(
-                        List<DuplicateCodeLine> lines) {
+                        List<List<DuplicateCodeLine>> fileLineGroups) {
 
-                Map<String, Integer> blockCounts = new HashMap<>();
-
-                for (int i = 0; i <= lines.size() - BLOCK_SIZE; i++) {
-
-                        StringBuilder block = new StringBuilder();
-
-                        for (int j = 0; j < BLOCK_SIZE; j++) {
-
-                                block.append(
-                                                lines.get(i + j)
-                                                                .getContent())
-                                                .append("\n");
-                        }
-
-                        String blockText = block.toString();
-
-                        blockCounts.put(
-                                        blockText,
-                                        blockCounts.getOrDefault(
-                                                        blockText,
-                                                        0) + 1);
-                }
+                Map<String, List<DuplicateCodeLine>> blockMap = createBlockMap(
+                                fileLineGroups);
 
                 int duplicateCount = 0;
 
-                for (int count : blockCounts.values()) {
+                for (List<DuplicateCodeLine> duplicates : blockMap.values()) {
 
-                        if (count > 1) {
+                        if (duplicates.size() > 1) {
 
                                 duplicateCount++;
                         }
@@ -191,62 +218,58 @@ public class DuplicateCodeAnalyzeService {
                 return duplicateCount;
         }
 
-        private int countHeavyDuplicateLines(
-                        List<DuplicateCodeLine> lines) {
+        private String createBlockText(
+                        List<DuplicateCodeLine> lines,
+                        int startIndex) {
 
-                Map<String, Integer> lineCounts = new HashMap<>();
+                StringBuilder block = new StringBuilder();
 
-                for (DuplicateCodeLine line : lines) {
+                for (int i = 0; i < BLOCK_SIZE; i++) {
 
-                        lineCounts.put(
-                                        line.getContent(),
-                                        lineCounts.getOrDefault(
-                                                        line.getContent(),
-                                                        0) + 1);
+                        block.append(
+                                        lines.get(
+                                                        startIndex + i)
+                                                        .getContent())
+                                        .append(
+                                                        "\n");
                 }
 
-                int duplicateCount = 0;
-
-                for (int count : lineCounts.values()) {
-
-                        if (count >= LINE_DUPLICATE_THRESHOLD) {
-
-                                duplicateCount++;
-                        }
-                }
-
-                return duplicateCount;
+                return block.toString();
         }
 
         private String normalize(
                         String content) {
 
                 return content
-                                .replaceAll("//.*", "")
-                                .replaceAll("#.*", "")
+                                .replaceAll(
+                                                "//.*",
+                                                "")
+                                .replaceAll(
+                                                "#.*",
+                                                "")
                                 .trim();
         }
 
         private int calculateScore(
-                        int blockDuplicateCount,
-                        int lineDuplicateCount) {
+                        int blockDuplicateCount) {
 
-                int duplicatePoint = blockDuplicateCount * 2
-                                + lineDuplicateCount;
+                if (blockDuplicateCount == 0) {
 
-                if (duplicatePoint == 0) {
                         return MAX_SCORE;
                 }
 
-                if (duplicatePoint <= 5) {
+                if (blockDuplicateCount <= 2) {
+
                         return 8;
                 }
 
-                if (duplicatePoint <= 15) {
+                if (blockDuplicateCount <= 5) {
+
                         return 5;
                 }
 
-                if (duplicatePoint <= 30) {
+                if (blockDuplicateCount <= 10) {
+
                         return 2;
                 }
 
