@@ -69,6 +69,12 @@ public class PhpIgnoreLineConfig
             return true;
         }
 
+        if (trimmedLine.matches(
+                        "^[a-zA-Z:-]+\\s*=\\s*\".*\"$")) {
+
+            return true;
+        }
+
         if (trimmedLine.startsWith("namespace ")
                 || trimmedLine.startsWith("use ")
                 || trimmedLine.startsWith("#[")
@@ -86,13 +92,6 @@ public class PhpIgnoreLineConfig
             return true;
         }
 
-        if (trimmedLine.startsWith("'")
-                && trimmedLine.contains(
-                                "=>")) {
-
-            return true;
-        }
-
         if (trimmedLine.contains(
                         "=> env(")) {
 
@@ -100,7 +99,19 @@ public class PhpIgnoreLineConfig
         }
 
         if (trimmedLine.matches(
-                        "'.*'\\s*=>.*")) {
+                        "^[-|]+$")) {
+
+            return true;
+        }
+
+        if (trimmedLine.matches(
+                        "^[\\[\\]\\{\\}\\(\\),;]+$")) {
+
+            return true;
+        }
+
+        if (trimmedLine.matches(
+                        "^'.*'\\s*=>\\s*(env|\\[|true|false|null|'|\\d+).*")) {
 
             return true;
         }

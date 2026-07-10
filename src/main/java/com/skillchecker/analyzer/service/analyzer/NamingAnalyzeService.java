@@ -64,7 +64,26 @@ public class NamingAnalyzeService {
         public List<AnalysisIssue> getIssues(
                         File repositoryDirectory) {
 
-                return new ArrayList<>();
+                List<AnalysisIssue> issues =
+                                new ArrayList<>();
+
+                issues.addAll(
+                                classNamingChecker.getIssues(
+                                                repositoryDirectory));
+
+                issues.addAll(
+                                methodNamingChecker.getIssues(
+                                                repositoryDirectory));
+
+                issues.addAll(
+                                variableNamingChecker.getIssues(
+                                                repositoryDirectory));
+
+                issues.addAll(
+                                constantNamingChecker.getIssues(
+                                                repositoryDirectory));
+
+                return issues;
         }
 
         private int calculateScore(
