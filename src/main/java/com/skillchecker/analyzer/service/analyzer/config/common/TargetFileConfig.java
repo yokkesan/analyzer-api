@@ -35,11 +35,21 @@ public final class TargetFileConfig {
                         "/tmp/",
                         "/temp/");
 
+        public static final List<String> IGNORE_FILES = List.of(
+                        "composer.lock",
+                        "package-lock.json",
+                        "yarn.lock",
+                        "pnpm-lock.yaml",
+                        "bun.lockb",
+                        "welcome.blade.php");
+
         public static boolean isTargetFile(
                         File file) {
 
                 String path = file.getPath()
-                                .replace("\\", "/");
+                                .replace(
+                                                "\\",
+                                                "/");
 
                 for (String ignorePath : IGNORE_PATHS) {
 
@@ -51,6 +61,12 @@ public final class TargetFileConfig {
                 }
 
                 String fileName = file.getName();
+
+                if (IGNORE_FILES.contains(
+                                fileName)) {
+
+                        return false;
+                }
 
                 return EXTENSIONS.stream()
                                 .anyMatch(

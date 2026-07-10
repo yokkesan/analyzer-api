@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.skillchecker.analyzer.dto.AnalysisIssue;
+import com.skillchecker.analyzer.service.analyzer.config.common.TargetFileConfig;
 
 @Service
 public class NestingChecker {
@@ -65,6 +66,12 @@ public class NestingChecker {
                 continue;
             }
 
+            if (!TargetFileConfig.isTargetFile(
+                    file)) {
+
+                continue;
+            }
+
             List<String> lines =
                     Files.readAllLines(
                             file.toPath());
@@ -74,38 +81,65 @@ public class NestingChecker {
             for (int i = 0; i < lines.size(); i++) {
 
                 String line =
-                        lines.get(i);
+                        lines.get(i).trim();
 
-                for (char c : line.toCharArray()) {
+                if (line.startsWith("<")) {
 
-                    if (c == '{') {
+                    continue;
+                }
 
-                        nestingLevel++;
+                if (isControlStatement(
+                                line)
+                        && line.contains(
+                                        "{")) {
 
-                        if (nestingLevel
-                                > MAX_NESTING_LEVEL) {
+                    nestingLevel++;
 
-                            issues.add(
-                                    new AnalysisIssue(
-                                            file.getPath(),
-                                            i + 1,
-                                            i + 1,
-                                            line,
-                                            "ネストが"
-                                                    + MAX_NESTING_LEVEL
-                                                    + "階層を超えています"));
-                        }
+                    if (nestingLevel
+                            > MAX_NESTING_LEVEL) {
+
+                        issues.add(
+                                new AnalysisIssue(
+                                        file.getPath(),
+                                        i + 1,
+                                        i + 1,
+                                        line,
+                                        "ネストが"
+                                                + MAX_NESTING_LEVEL
+                                                + "階層を超えています"));
                     }
+                }
 
-                    if (c == '}') {
+                if (line.contains(
+                                "}")) {
 
-                        nestingLevel =
-                                Math.max(
-                                        0,
-                                        nestingLevel - 1);
-                    }
+                    nestingLevel =
+                            Math.max(
+                                    0,
+                                    nestingLevel - 1);
                 }
             }
         }
+    }
+
+    private boolean isControlStatement(
+            String line) {
+
+        return line.startsWith(
+                        "if")
+                || line.startsWith(
+                                "for")
+                || line.startsWith(
+                                "while")
+                || line.startsWith(
+                                "switch")
+                || line.startsWith(
+                                "catch")
+                || line.startsWith(
+                                "foreach")
+                || line.startsWith(
+                                "else if")
+                || line.startsWith(
+                                "else");
     }
 }

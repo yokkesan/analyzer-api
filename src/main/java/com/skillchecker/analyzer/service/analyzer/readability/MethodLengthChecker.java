@@ -8,6 +8,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.skillchecker.analyzer.dto.AnalysisIssue;
+import com.skillchecker.analyzer.service.analyzer.config.common.TargetFileConfig;
 
 @Service
 public class MethodLengthChecker {
@@ -65,6 +66,12 @@ public class MethodLengthChecker {
                 continue;
             }
 
+            if (!TargetFileConfig.isTargetFile(
+                    file)) {
+
+                continue;
+            }
+
             List<String> lines =
                     Files.readAllLines(
                             file.toPath());
@@ -81,9 +88,8 @@ public class MethodLengthChecker {
                         lines.get(i).trim();
 
                 if (!inMethod
-                        && line.contains("(")
-                        && line.contains(")")
-                        && line.contains("{")) {
+                        && isMethodDeclaration(
+                                line)) {
 
                     inMethod = true;
 
@@ -137,5 +143,14 @@ public class MethodLengthChecker {
                 }
             }
         }
+    }
+
+    private boolean isMethodDeclaration(
+            String line) {
+
+        return line.matches(
+                        ".*\\w+\\s+\\w+\\s*\\([^)]*\\)\\s*\\{\\s*$")
+                || line.matches(
+                        ".*function\\s+\\w+\\s*\\([^)]*\\)\\s*\\{\\s*$");
     }
 }
