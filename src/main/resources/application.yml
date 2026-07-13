@@ -9,3 +9,7 @@ spring:
       ddl-auto: update
 
     show-sql: true
+
+  analyzer:
+
+  api-key: ${ANALYZER_API_KEY}

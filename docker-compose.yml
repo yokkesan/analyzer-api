@@ -14,11 +14,15 @@ services:
       DB_URL: ${DB_URL}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      ANALYZER_API_KEY: ${ANALYZER_API_KEY}
 
     tty: true
 
     depends_on:
       - mysql
+
+    networks:
+      - skillchecker-network
 
   mysql:
     image: mysql:8.0
@@ -34,6 +38,13 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
 
+    networks:
+      - skillchecker-network
+
 volumes:
   gradle-cache:
   mysql-data:
+
+networks:
+  skillchecker-network:
+    external: true
