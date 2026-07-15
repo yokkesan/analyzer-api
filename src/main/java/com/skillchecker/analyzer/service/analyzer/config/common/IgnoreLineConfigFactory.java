@@ -3,12 +3,14 @@ package com.skillchecker.analyzer.service.analyzer.config.common;
 import java.io.File;
 import java.util.List;
 
+import com.skillchecker.analyzer.service.analyzer.config.kotlin.KotlinIgnoreLineConfig;
 import com.skillchecker.analyzer.service.analyzer.config.php.PhpIgnoreLineConfig;
 
 public final class IgnoreLineConfigFactory {
 
         private static final List<LanguageIgnoreLineConfig> CONFIGS = List.of(
-                        new PhpIgnoreLineConfig());
+                        new PhpIgnoreLineConfig(),
+                        new KotlinIgnoreLineConfig());
 
         private IgnoreLineConfigFactory() {
         }
